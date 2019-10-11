@@ -1,21 +1,11 @@
 #!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 from statistics import mean
 import math
 import numpy as np
 import pandas as pd
-
 import matplotlib.pyplot as plt
 
-
-# In[2]:
-
-
-def readin(fileName):
+def load_dataset(fileName):
     inFile = open(fileName, 'r')
     
     line = inFile.readline().strip()
@@ -38,10 +28,6 @@ def readin_log(fileName):
     dfl = (np.log(df)).replace(-np.inf, 0)
     return dfl
 
-
-# In[3]:
-
-
 def by_sample(ms3data, technical_replicates):
     #separates the data from readin into the samples
     msSamples = {}
@@ -52,10 +38,6 @@ def by_sample(ms3data, technical_replicates):
         msSamples[sample] = pd.DataFrame.from_dict(reps, dtype = float)
     
     return msSamples
-
-
-# In[4]:
-
 
 def n_thresholds(alist, percents=[95], display=True):
     ###Given a list calculates thresholds.
@@ -90,19 +72,7 @@ def n_thresholds(alist, percents=[95], display=True):
     
     return r
 
-
-# In[5]:
-
-
-
-
-
-### Graphed types
-
-
-# In[6]:
-
-
+### Graphed types - as used in figure B
 def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros=False):
     plt.xscale('log')
     plt.title(title)
@@ -127,19 +97,7 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros
 
     plt.show()
 
-
-# In[7]:
-
-
-
-
-
-### ROC graphs
-
-
-# In[8]:
-
-
+### ROC graphs - used in figure C
 def ROC_plot(msdata, neg_col_name, technical_replicates, rep_name, as_fraction=False):
     #Generates the points for the curve showing
     #    y-axis: how many sample points are included
@@ -176,11 +134,7 @@ def ROC_plot(msdata, neg_col_name, technical_replicates, rep_name, as_fraction=F
             
     return points
 
-
-# In[9]:
-
-
-def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False, labels=None):
+def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False, labels=None, title="All Channels"):
     #Calculates and graphs the ROC-like curve for all columns in range.
     #    specifying the boost draws it first, coloring it blue
     #    as_fraction:
@@ -208,19 +162,7 @@ def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False
                 plt.plot(p.values(), p.keys())
     if labels: plt.legend(loc='lower right')
 
-
-# In[10]:
-
-
-
-
-
-### Neg to sample ratios
-
-
-# In[11]:
-
-
+### Neg to sample ratios - used in figureD
 def get_ratios(blank, sample):
     ratios = []
     for protein in sample.index.values:
@@ -230,11 +172,18 @@ def get_ratios(blank, sample):
         
     return ratios
 
+def pdc_plot(data):
+    pdc_points = []
+    data.sort()
+    for i in data:
+        x = len([ y for y in data if y <= i])/len(data)*100
+        pdc_points.append(x)
+    return ([data,pdc_points])
 
-# In[12]:
-
-
-def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=False):
+def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=False, pdc=True):
+    
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
     if log_scale:
         plt.xscale('log')
     plt.title(title)
@@ -245,7 +194,7 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
 
         bins = 50
         if log_scale:
-            minx = np.log10(min([x for x in ratios if x != 0])) -.5
+            minx = np.log10(min([x for x in ratios if x != 0])) -.25
             maxx = np.log10(max(ratios)) +.5
             bins = np.logspace(minx, maxx)
             if show_zeros:
@@ -253,7 +202,7 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
                 for i in bins: x.append(i)
                 bins = x
             
-        plt.hist(ratios, alpha = .7, bins=bins, label=channels[c])
+        ax1.hist(ratios, alpha = .7, bins=bins, label=channels[c])
         
         if details:
             print(channels[c]+':')
@@ -262,14 +211,12 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
             threshold95 = n_thresholds(ratios, display=False)['with_zeros'][95]
             print ('95% Threshold: {0:.4f}'.format(threshold95))
             
+    pdc_points = pdc_plot(ratios)
+    ax2.set_ylim([0,100])
+    ax2.plot(pdc_points[0], pdc_points[1], color='orange')
     
-    plt.legend(loc='upper right')
+    #plt.legend(loc='upper right')
     plt.xlabel("Blank/Sample Ratio")
-    plt.ylabel("Number of Proteins")
-
-
-# In[ ]:
-
-
-
-
+    ax1.set_ylabel("Number of Proteins")
+    ax2.set_ylabel("-- Percent of Proteins")
+    
