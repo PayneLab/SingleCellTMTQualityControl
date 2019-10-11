@@ -215,8 +215,8 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
     ax2.set_ylim([0,100])
     ax2.plot(pdc_points[0], pdc_points[1], color='orange')
     
-    #plt.legend(loc='upper right')
-    plt.xlabel("Blank/Sample Ratio")
+    ax1.legend(loc='upper right')
+    ax1.set_xlabel("Blank/Sample Ratio")
     ax1.set_ylabel("Number of Proteins")
     ax2.set_ylabel("-- Percent of Proteins")
     
