@@ -122,19 +122,27 @@ def ROC_plot(msdata, neg_col_name, technical_replicates, rep_name, as_fraction=F
     all_data = np.unique(all_data)
     all_data.sort()
     all_data = all_data[::-1]
+
+    # y_max should be greater than x_max, but might not be
+    x_max = len([s for s in neg_cont if s != 0])
+    y_max = len([s for s in sample if s != 0])
+    corner = max(x_max, y_max)
     
     points = {}
-    total = len(all_data)
     for t in all_data:
         x = len([i for i in neg_cont if i > t])
-        if as_fraction: x=x / len((neg_cont))
+        if as_fraction: x=x / corner
         y = len([i for i in sample if i > t])
-        if as_fraction: y=y / len(skipZero(sample))
+        if as_fraction: y=y / corner
         points[y] = x
             
+    if as_fraction:
+        points[1]= 1 #go to corner
+    else:
+        points[corner]=corner
     return points
 
-def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False, labels=None, title="All Channels"):
+def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False, labels=None, title="All Channels", get_score=False):
     #Calculates and graphs the ROC-like curve for all columns in range.
     #    specifying the boost draws it first, coloring it blue
     #    as_fraction:
@@ -146,22 +154,37 @@ def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False
     
     if boost==None: boost_index = None
     else: boost_index = data.columns.get_loc(boost)
+    if get_score: areas = {}
     
     if boost!=None:
         p = ROC_plot(data, neg_col, {'a':[boost_index]}, 'a', as_fraction=as_fraction)
-        if labels:
-            plt.plot(p.values(), p.keys(), label=labels[boost])
-        else:
-            plt.plot(p.values(), p.keys())
+        if labels: label=labels[boost]
+        else: label = boost
+        plt.plot(p.values(), p.keys(), label=label)
+        if get_score:
+            area = np.trapz(y=list(p.keys()), x=list(p.values()))
+            if not as_fraction: area=area/(max(list(p.keys()))**2)
+            areas[labels[boost]]=area
+        
     for i in cols:
         if i != data.columns.get_loc(neg_col) and i != boost_index:
             p = ROC_plot(data, neg_col, {'a':[i]}, 'a', as_fraction=as_fraction)       
             if labels:
                 label = labels[(data.columns.values)[i]]
-                plt.plot(p.values(), p.keys(), label=label)
             else:
-                plt.plot(p.values(), p.keys())
-    if labels: plt.legend(loc='lower right')
+                label=(data.columns.values)[i]
+            plt.plot(p.values(), p.keys(), label=label)
+            if get_score:
+                area = np.trapz(list(p.keys()),x=list(p.values()))
+                if not as_fraction: area=area/(max(list(p.keys()))**2)
+                areas[label]=area
+    plt.legend(loc='lower right')
+    plt.axis('square')
+    if get_score:
+        print ("Scores (out of 1)")
+        for k in areas:
+            print ("{0}\t{1:.4f}".format(k,areas[k]))
+        return areas
 
 ### Neg to sample ratios - used in figureD
 def get_ratios(blank, sample):
