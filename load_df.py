@@ -142,6 +142,7 @@ def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False
     #      False: generates curves in terms of absolute number of proteins
     plt.xlabel("Control Proteins")
     plt.ylabel("Sample Proteins")
+    plt.title(title)
     
     if boost==None: boost_index = None
     else: boost_index = data.columns.get_loc(boost)
