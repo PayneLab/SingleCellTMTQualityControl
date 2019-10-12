@@ -28,13 +28,16 @@ def readin_log(fileName):
     dfl = (np.log(df)).replace(-np.inf, 0)
     return dfl
 
-def by_sample(ms3data, technical_replicates):
+def by_sample(data, technical_replicates):
     #separates the data from readin into the samples
+    #   data is the dataframe returned by load_df
+    #   technical_replicates is a dict arranged as
+    #     "Condition name":[0,1,2]#channel numbers
     msSamples = {}
     for sample in technical_replicates:
         reps = {}
         for rep in technical_replicates[sample]:
-            reps[ms3data.iloc[:,rep].name] = ms3data.iloc[:,rep]
+            reps[data.iloc[:,rep].name] = data.iloc[:,rep]
         msSamples[sample] = pd.DataFrame.from_dict(reps, dtype = float)
     
     return msSamples
@@ -74,6 +77,13 @@ def n_thresholds(alist, percents=[95], display=True):
 
 ### Graphed types - as used in figure B
 def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros=False):
+    #Creates a histogram of selected channels, generally samples and blank.
+    #    data is a pandas dataframe as returned by load_df
+    #    channels is a dictionary where keys are the column name in data
+    #    and the value is the desired label, such as "Cell X"
+    #    show_zeros controls whether the zero values are shown. 
+    #    Since in protein data this means it was not detected,
+    #    zeros are left out here by default, but may be included if desired.
     plt.xscale('log')
     plt.title(title)
     
@@ -81,6 +91,7 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros
         column = data[key]
         column = np.sort(column.values)
         
+        #This scales the histogram to the data.
         minx = np.log10(min([x for x in column if x != 0])) -.5
         maxx = np.log10(max(column)) +.5
         bins = np.logspace(minx, maxx)
@@ -90,7 +101,6 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros
             bins = x
         plt.hist(column, alpha = .5, bins=bins, label=channels[key])
         
-    
     plt.legend(loc='upper right')
     plt.xlabel("Intensity Value")
     plt.ylabel("Number of Proteins")
@@ -98,12 +108,18 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros
     plt.show()
 
 ### ROC graphs - used in figure C
-def ROC_plot(msdata, neg_col_name, technical_replicates, rep_name, as_fraction=False):
-    #Generates the points for the curve showing
+def ROC_plot(msdata, neg_col_name, replicates, rep_name, as_fraction=False, square=False):
+    #Generates the points for the curve showing for any threshold
     #    y-axis: how many sample points are included
-    #    x-axis: how many points from the negative control are
-    #    as the threshold changes.
-    #    See the exaggerated curve above for further clarification.
+    #    x-axis: how many points from the negative control
+    #
+    #    Parameters:
+    #    msdata is a dataframe as returned by load_df
+    #    neg_col_name is the name of the blank column
+    #    replicates is a dict arranged as
+    #     "Condition name":[0]#channel numbers
+    #    rep_name is the condition name from replicates.
+    #    Note that square must be false if the replicate includes more than one.
     #
     #    as_fraction:
     #      True: generates the curves scaled to total number, as decimal
@@ -111,8 +127,9 @@ def ROC_plot(msdata, neg_col_name, technical_replicates, rep_name, as_fraction=F
     #
     #    returns a dictionary of points.
     #    must then be plotted by plt.plot(points.values(), points.keys())
+    #    This step is omitted so multiple may be graphed together.
     
-    samples = by_sample(msdata, technical_replicates)
+    samples = by_sample(msdata, replicates)
     neg_cont = msdata.loc[:,neg_col_name]
     neg_cont = np.array(neg_cont)
 
@@ -131,9 +148,11 @@ def ROC_plot(msdata, neg_col_name, technical_replicates, rep_name, as_fraction=F
     points = {}
     for t in all_data:
         x = len([i for i in neg_cont if i > t])
-        if as_fraction: x=x / corner
+        if as_fraction and square: x=x / corner
+        elif as_fraction: x=x / x_max
         y = len([i for i in sample if i > t])
-        if as_fraction: y=y / corner
+        if as_fraction and square: y=y / corner
+        if as_fraction: y=y / y_max
         points[y] = x
             
     if as_fraction:
@@ -142,12 +161,29 @@ def ROC_plot(msdata, neg_col_name, technical_replicates, rep_name, as_fraction=F
         points[corner]=corner
     return points
 
-def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False, labels=None, title="All Channels", get_score=False):
+def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=False, labels=None, title="All Channels", get_score=False):
     #Calculates and graphs the ROC-like curve for all columns in range.
-    #    specifying the boost draws it first, coloring it blue
+    #    Parameters:
+    #    msdata is a dataframe as returned by load_df
+    #    neg_col is the name of the blank column
+    #    
+    #    cols is a list of column indexes. This should only be specified
+    #      if some channels should not be graphed. If it is, specifying
+    #      labels as well is recommended.
+    #    
+    #    boost is the name of the boost channel. Specifying it draws it first,
+    #      which colors it blue and lists it first in the legend.
+    #    labels is a dictionary of the column names and desired labels
+    #    title is passed directly as the plot title.
     #    as_fraction:
     #      True: generates the curves scaled to total number, as decimal
     #      False: generates curves in terms of absolute number of proteins
+    #    get_score is a boolean. If true it will calculate, print, 
+    #      and return the 'area under the curve' based score by channel
+    #      1 is best, anything under .5 is worse than no difference.
+    if cols==None:
+        cols=cols=list(range(0,len(data.columns))
+                       
     plt.xlabel("Control Proteins")
     plt.ylabel("Sample Proteins")
     plt.title(title)
@@ -157,7 +193,7 @@ def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False
     if get_score: areas = {}
     
     if boost!=None:
-        p = ROC_plot(data, neg_col, {'a':[boost_index]}, 'a', as_fraction=as_fraction)
+        p = ROC_plot(data, neg_col, {'a':[boost_index]}, 'a', as_fraction=as_fraction,square=True)
         if labels: label=labels[boost]
         else: label = boost
         plt.plot(p.values(), p.keys(), label=label)
@@ -168,7 +204,7 @@ def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False
         
     for i in cols:
         if i != data.columns.get_loc(neg_col) and i != boost_index:
-            p = ROC_plot(data, neg_col, {'a':[i]}, 'a', as_fraction=as_fraction)       
+            p = ROC_plot(data, neg_col, {'a':[i]}, 'a', as_fraction=as_fraction, square=True)       
             if labels:
                 label = labels[(data.columns.values)[i]]
             else:
@@ -188,15 +224,21 @@ def ROC_all(data, neg_col, cols=list(range(0,10)), boost=None, as_fraction=False
 
 ### Neg to sample ratios - used in figureD
 def get_ratios(blank, sample):
+    #Takes the blank and sample series
+    #   and returns for each protein
+    #   in the sample the ratio of blank/sample
     ratios = []
     for protein in sample.index.values:
         sample_value = sample[protein]
         blank_value = blank[protein]
         if sample_value!=0: ratios.append(blank_value/sample_value)
-        
     return ratios
 
 def pdc_plot(data):
+    #Generate the points for a probability density curve
+    #    data is any iterable set of numbers.    
+    #    The curve is then plotted with
+    #    plt.plot(pdc_points[0], pdc_points[1])
     pdc_points = []
     data.sort()
     for i in data:
@@ -205,7 +247,14 @@ def pdc_plot(data):
     return ([data,pdc_points])
 
 def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=False, pdc=True):
-    
+    #Plots the noise/signal ratios
+    #    data is a dataframe as returned by load_df
+    #    channels is a dictionary where keys are the column name in data
+    #      and the value is the desired label, such as "Cell X"
+    #    details=True prints some extra info, such as average
+    #    log_scale controls whether the plot is on a log scale
+    #    show_zeros controls whether 0 is graphed
+    #    pdc controls whether the probability density curve is shown
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     if log_scale:
@@ -225,7 +274,6 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
                 x = [0]
                 for i in bins: x.append(i)
                 bins = x
-            
         ax1.hist(ratios, alpha = .7, bins=bins, label=channels[c])
         
         if details:
@@ -243,4 +291,3 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
     ax1.set_xlabel("Blank/Sample Ratio")
     ax1.set_ylabel("Number of Proteins")
     ax2.set_ylabel("-- Percent of Proteins")
-    
