@@ -182,7 +182,7 @@ def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=False, labels=None
     #      and return the 'area under the curve' based score by channel
     #      1 is best, anything under .5 is worse than no difference.
     if cols==None:
-        cols=cols=list(range(0,len(data.columns))
+        cols=list(range(0,len(data.columns)))
                        
     plt.xlabel("Control Proteins")
     plt.ylabel("Sample Proteins")
