@@ -6,16 +6,32 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from tkinter import filedialog, Tk
-
 def find_file():
+    #Opens the dialog to select a file
+    #returns the file path.
     r=Tk()
     r.withdraw()
     input_file =  filedialog.askopenfilename(initialdir = "/",title = "Select file", \
                                              filetypes = (("txt files","*.txt"),("all files","*.*")))
     r.destroy()
     return input_file
+
+def print_columns(file):
+    #Displays all column names for the user.
+    with open(file, 'r') as _file:
+        line = _file.readline().strip()
+        headings = line.split('\t')
+    print (headings)
+    return headings
     
 def get_cols(file, prefix=None, experiment=None, contains=[], not_contains=[]):
+    #Generates a list of column names fitting the kwarg requirements.
+    #    prefix is what they must start with.
+    #    experiment is what they end with
+    #    contains is a list of phrases that
+    #        must be somewhere in the name
+    #    not_contains is a list of phrases
+    #        that must not be in the name.    
     with open(file, 'r') as _file:
         line = _file.readline().strip()
         headings = line.split('\t')
@@ -30,6 +46,12 @@ def get_cols(file, prefix=None, experiment=None, contains=[], not_contains=[]):
     return headings
 
 def load_dataset(file=None, usecols=None, prefix='Reporter intensity', experiment=None, contains=[], not_contains=['corrected', 'count'], index='Protein IDs'):
+    #Takes a file and returns a dataframe.
+    #    file: the file path to read from
+    #    The rest of the paramters are used to select the columns.
+    #    By default, it will look for ones starting with 'Reporter intensity'
+    #        that do not contain 'count' or 'corrected' and use the 'Protein IDs' 
+    #        column as the indecies. 
     if not file: 
         file=find_file()
         if not file:#No file selected
@@ -41,11 +63,6 @@ def load_dataset(file=None, usecols=None, prefix='Reporter intensity', experimen
     for i in headings: usecols.append(i)
     df = pd.read_csv(file, sep='\t', header=0, index_col=0, usecols=usecols)
     return df
-
-def readin_log(fileName):
-    df = readin(fileName)
-    dfl = (np.log(df)).replace(-np.inf, 0)
-    return dfl
 
 def by_sample(data, technical_replicates):
     #separates the data from readin into the samples
@@ -84,7 +101,6 @@ def n_thresholds(alist, percents=[95], display=True):
         p = (100.0-float(i))/100.0
         t = float(alist[math.ceil(float(len(alist))*p)])
         skip_zeros[i] = t
-        
         if display: print("{0}% threshold: {1}".format(i, t))
     
     r = {
