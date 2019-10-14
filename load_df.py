@@ -196,7 +196,7 @@ def ROC_plot(msdata, neg_col_name, replicates, rep_name, as_fraction=False, squa
         points[corner]=corner
     return points
 
-def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=False, labels=None, title="All Channels", get_score=False):
+def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=True, labels=None, title="All Channels", get_score=False):
     #Calculates and graphs the ROC-like curve for all columns in range.
     #    Parameters:
     #    msdata is a dataframe as returned by load_df
