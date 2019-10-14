@@ -187,7 +187,7 @@ def ROC_plot(msdata, neg_col_name, replicates, rep_name, as_fraction=False, squa
         elif as_fraction: x=x / x_max
         y = len([i for i in sample if i > t])
         if as_fraction and square: y=y / corner
-        if as_fraction: y=y / y_max
+        elif as_fraction: y=y / y_max
         points[y] = x
             
     if as_fraction:
