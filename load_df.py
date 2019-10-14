@@ -5,8 +5,23 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def load_dataset(fileName):
-    inFile = open(fileName, 'r')
+from tkinter import filedialog, Tk
+
+def find_file():
+    r=Tk()
+    r.withdraw()
+    input_file =  filedialog.askopenfilename(initialdir = "/",title = "Select file", \
+                                             filetypes = (("txt files","*.txt"),("all files","*.*")))
+    r.destroy()
+    return input_file
+    
+def load_dataset(file=None):
+    if not file: 
+        file=find_file()
+        if not file:#No file selected
+            print ("No file selected.")
+            return False
+    inFile = open(file, 'r')
     
     line = inFile.readline().strip()
     headings = line.split('\t')
