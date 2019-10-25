@@ -281,7 +281,7 @@ def pdc_plot(data):
         pdc_points.append(x)
     return ([data,pdc_points])
 
-def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=False, pdc=True):
+def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=False, pdc=True, cutoff=.2):
     #Plots the noise/signal ratios
     #    data is a dataframe as returned by load_df
     #    channels is a dictionary where keys are the column name in data
@@ -316,11 +316,13 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
             print((len([x for x in ratios if x==0])),'of',len(ratios),'are 0.0')
             print ('Average: {0:.4f}'.format(mean(ratios)))
             threshold95 = n_thresholds(ratios, display=False)['with_zeros'][95]
-            print ('95% Threshold: {0:.4f}'.format(threshold95))
+            print ('95% Threshold: {0:.4f} (1 to {1:.1f})'.format(threshold95, 1/threshold95))
             
     pdc_points = pdc_plot(ratios)
     ax2.set_ylim([0,100])
-    ax2.plot(pdc_points[0], pdc_points[1], color='orange')
+    ax2.plot(pdc_points[0], pdc_points[1], color='orange', label="Probability Density")
+    cutoff_percent=(len([x for x in ratios if x < cutoff])/len(ratios))*100
+    ax1.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
     
     ax1.legend(loc='upper right')
     ax1.set_xlabel("Blank/Sample Ratio")
