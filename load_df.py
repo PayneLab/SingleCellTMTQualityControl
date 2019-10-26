@@ -281,7 +281,7 @@ def pdc_plot(data):
         pdc_points.append(x)
     return ([data,pdc_points])
 
-def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=False, pdc=True, cutoff=.2):
+def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=True, pdc=False, cutoff=.2):
     #Plots the noise/signal ratios
     #    data is a dataframe as returned by load_df
     #    channels is a dictionary where keys are the column name in data
@@ -289,12 +289,19 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
     #    details=True prints some extra info, such as average
     #    log_scale controls whether the plot is on a log scale
     #    show_zeros controls whether 0 is graphed
+            #Options:
+    #       True: split y-axis to show zeros
+    #       'no_break': show zeros without splitting y-axis
+    #       False: No zeros shown
     #    pdc controls whether the probability density curve is shown
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
+    
+    if show_zeros==True:
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [1, 4]})
+    else: fig, ax1 = plt.subplots()
+    if pdc: ax_pdc = ax1.twinx()
+    ax1.set_title(title)
     if log_scale:
         plt.xscale('log')
-    plt.title(title)
     blank_data = data.loc[:,blank]
     for c in channels:
         sample = data.loc[:,c]#retrives the column
@@ -305,12 +312,33 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
             minx = np.log10(min([x for x in ratios if x != 0])) -.25
             maxx = np.log10(max(ratios)) +.5
             bins = np.logspace(minx, maxx)
-            if show_zeros:
-                x = [0]
-                for i in bins: x.append(i)
-                bins = x
-        ax1.hist(ratios, alpha = .7, bins=bins, label=channels[c])
-        
+        if show_zeros:
+            x = [0]
+            for i in bins: x.append(i)
+            bins=x
+        if show_zeros==True:
+            ax2.hist(ratios, alpha = .7, bins=bins, label=channels[c])
+            y, x, _ = ax1.hist(ratios, alpha = .7, bins=bins, label=channels[c])
+            
+            zero_count = y[0]#first x will be zero
+            zero_ceil = (math.ceil(zero_count/50))*50
+            ax1.set_ylim(zero_ceil-50, zero_ceil)
+            
+            main_ceiling = (math.ceil(max(y[1:])/10))*10
+            ax2.set_ylim(0, main_ceiling)  # most of the data
+            
+            ax1.spines['bottom'].set_visible(False)
+            ax2.spines['top'].set_visible(False)
+            ax1.xaxis.set_ticks_position('none') 
+            ax1.tick_params(labeltop=False)  
+            ax2.xaxis.tick_bottom()
+            
+            ax2.set_xlabel("Blank/Sample Ratio")
+            ax2.set_ylabel("Number of Proteins")
+        else:
+            ax1.set_xlabel("Blank/Sample Ratio")
+            ax1.set_ylabel("Number of Proteins")
+            ax1.hist(ratios, alpha = .7, bins=bins, label=channels[c])
         if details:
             print(channels[c]+':')
             print((len([x for x in ratios if x==0])),'of',len(ratios),'are 0.0')
@@ -318,13 +346,14 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
             threshold95 = n_thresholds(ratios, display=False)['with_zeros'][95]
             print ('95% Threshold: {0:.4f} (1 to {1:.1f})'.format(threshold95, 1/threshold95))
             
-    pdc_points = pdc_plot(ratios)
-    ax2.set_ylim([0,100])
-    ax2.plot(pdc_points[0], pdc_points[1], color='orange', label="Probability Density")
+    if pdc: 
+        pdc_points = pdc_plot(ratios)
+        ax_pdc.set_ylim([0,100])
+        ax_pdc.plot(pdc_points[0], pdc_points[1], color='orange', label="Probability Density")
+        ax_pdc.set_ylabel("-- Percent of Proteins")
     cutoff_percent=(len([x for x in ratios if x < cutoff])/len(ratios))*100
     ax1.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
+    if show_zeros==True: ax2.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
+    
     
     ax1.legend(loc='upper right')
-    ax1.set_xlabel("Blank/Sample Ratio")
-    ax1.set_ylabel("Number of Proteins")
-    ax2.set_ylabel("-- Percent of Proteins")
