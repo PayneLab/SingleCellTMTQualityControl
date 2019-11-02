@@ -37,7 +37,7 @@ def n_thresholds(alist, percents=[95], display=True):
     return r
 
 ### Graphed types - as used in figure B
-def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros=False):
+def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros=True):
     #Creates a histogram of selected channels, generally samples and blank.
     #    data is a pandas dataframe as returned by load_dataset
     #    channels is a dictionary where keys are the column name in data
