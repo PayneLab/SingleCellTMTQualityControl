@@ -286,14 +286,14 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
             threshold95 = n_thresholds(ratios, display=False)['with_zeros'][95]
             print ('95% Threshold: {0:.4f} (1 to {1:.1f})'.format(threshold95, 1/threshold95))
             
-    if pdc: 
-        pdc_points = pdc_plot(ratios)
-        ax_pdc.set_ylim([0,100])
-        ax_pdc.plot(pdc_points[0], pdc_points[1], color='orange', label="Probability Density")
-        ax_pdc.set_ylabel("-- Percent of Proteins")
-    cutoff_percent=(len([x for x in ratios if x < cutoff])/len(ratios))*100
-    ax1.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
-    if show_zeros==True: ax2.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
+        if pdc: 
+            pdc_points = pdc_plot(ratios)
+            ax_pdc.set_ylim([0,100])
+            ax_pdc.plot(pdc_points[0], pdc_points[1], color='orange', label="Probability Density")
+            ax_pdc.set_ylabel("-- Percent of Proteins")
+        cutoff_percent=(len([x for x in ratios if x < cutoff])/len(ratios))*100
+        ax1.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
+        if show_zeros==True: ax2.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
     
     
     ax1.legend(loc='upper right')
