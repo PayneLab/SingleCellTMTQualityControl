@@ -44,23 +44,66 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros
     #    and the value is the desired label, such as "Cell X"
     #    show_zeros controls whether the zero values are shown. 
     #    Since in protein data this means it was not detected,
-    #    zeros are left out here by default, but may be included if desired.
-    plt.xscale('log')
-    plt.title(title)
+    #    zeros may be left out or may be included to demonstrate overlap.
     
+    #To get even bins, we first get the x range
+    #that we want to plot.
+    min_x_list = []
+    max_x_list = []
+    zero_heights = []
     for key in channels:
         column = data[key]
         column = np.sort(column.values)
         
         #This scales the histogram to the data.
-        minx = np.log10(min([x for x in column if x != 0])) -.5
-        maxx = np.log10(max(column)) +.5
-        bins = np.logspace(minx, maxx)
-        if show_zeros:
-            x = [0]
-            for i in bins: x.append(i)
-            bins = x
-        plt.hist(column, alpha = .5, bins=bins, label=channels[key])
+        min_x_list.append(np.log10(min([x for x in column if x != 0])) -.5)
+        max_x_list.append(np.log10(max(column)) +.5)
+        
+        #These will be the y values for the break tops.
+        zero_count = len([i for i in column if i == 0])
+        zero_ceil = (math.ceil(zero_count/50))*50
+        zero_heights.append(zero_ceil)
+    #These will be the extremes we want to plot.
+    minx = min(min_x_list)
+    maxx = max(max_x_list)
+    bins = np.logspace(minx, maxx)
+    
+    #y segments
+    zero_heights = list(set(zero_heights))
+    zero_heights.sort(reverse=True)#top to bottom
+    
+    axs = []
+    if show_zeros:
+        x = [0]
+        for i in bins: x.append(i)
+        bins = x
+        
+    if show_zeros==True:
+        height_ratios = []
+        for i in zero_heights: height_ratios.append(1)
+        height_ratios.append(7)#height of main, lower plot
+        
+        fig, (axs) = plt.subplots(len(zero_heights)+1, 1, sharex=True, gridspec_kw={'height_ratios': height_ratios})
+    else: fig, (axs) = plt.subplots()
+    
+    plt.xscale('log')
+    if show_zeros==True:
+        axs[0].set_title(title)
+        for ax, h in zip(axs,zero_heights):
+            ax.set_ylim(h-50, h)
+    else: axs.set_title(title)
+        
+    #Now we can plot it.
+    main_ceils = []
+    for key in channels:
+        column = data[key]
+        column = np.sort(column.values)
+        
+        for ax in axs:
+            y, x, _ = ax.hist(column, alpha = .5, bins=bins, label=channels[key])
+        main_ceils.append((math.ceil(max(y[1:])/s))*10)
+    main_ceiling=max(main_ceils)
+    axs[len(axs)-1].set_ylim(0, main_ceiling)
         
     plt.legend(loc='upper right')
     plt.xlabel("Intensity Value")
