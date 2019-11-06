@@ -37,7 +37,7 @@ def n_thresholds(alist, percents=[95], display=True):
     return r
 
 ### Graphed types - as used in figure B
-def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros=True):
+def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros=True, save_as=None):
     #Creates a histogram of selected channels, generally samples and blank.
     #    data is a pandas dataframe as returned by load_dataset
     #    channels is a dictionary where keys are the column name in data
@@ -84,14 +84,21 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros
         height_ratios.append(7)#height of main, lower plot
         
         fig, (axs) = plt.subplots(len(zero_heights)+1, 1, sharex=True, gridspec_kw={'height_ratios': height_ratios})
-    else: fig, (axs) = plt.subplots()
     
-    plt.xscale('log')
-    if show_zeros==True:
         axs[0].set_title(title)
         for ax, h in zip(axs,zero_heights):
             ax.set_ylim(h-50, h)
-    else: axs.set_title(title)
+            ax.spines['bottom'].set_visible(False)
+            ax.xaxis.set_ticks_position('none') 
+            ax.spines['top'].set_visible(False)
+            ax.tick_params(labeltop=False) 
+        axs[0].spines['top'].set_visible(True)
+        axs[len(axs)-1].spines['top'].set_visible(False)
+            
+    else: 
+        axs.set_title(title)
+        fig, (axs) = plt.subplots()
+    plt.xscale('log')
         
     #Now we can plot it.
     main_ceils = []
@@ -101,14 +108,20 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples", show_zeros
         
         for ax in axs:
             y, x, _ = ax.hist(column, alpha = .5, bins=bins, label=channels[key])
-        main_ceils.append((math.ceil(max(y[1:])/s))*10)
+        main_ceils.append((math.ceil(max(y[1:])/10))*10)
     main_ceiling=max(main_ceils)
-    axs[len(axs)-1].set_ylim(0, main_ceiling)
-        
+    
+    ax = axs[len(axs)-1]
+    ax.set_ylim(0, main_ceiling)
+    ax.spines['bottom'].set_visible(True)
+    ax.xaxis.tick_bottom()
+    
     plt.legend(loc='upper right')
     plt.xlabel("Intensity Value")
     plt.ylabel("Number of Proteins")
 
+    if save_as: fig.savefig(save_as, dpi=300)
+        
     plt.show()
 
 def by_sample(data, technical_replicates):
@@ -179,7 +192,7 @@ def ROC_plot(msdata, neg_col_name, replicates, rep_name, as_fraction=False, squa
         points[corner]=corner
     return points
 
-def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=True, labels=None, title="All Channels", get_score=False):
+def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=True, labels=None, title="All Channels", get_score=False, save_as=None):
     #Calculates and graphs the ROC-like curve for all columns in range.
     #    Parameters:
     #    msdata is a dataframe as returned by load_df
@@ -234,6 +247,9 @@ def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=True, labels=None,
                 areas[label]=area
     plt.legend(loc='lower right')
     plt.axis('square')
+    
+    if save_as: plt.savefig(save_as, dpi=300)
+        
     if get_score:
         print ("Scores (out of 1)")
         for k in areas:
@@ -264,7 +280,7 @@ def pdc_plot(data):
         pdc_points.append(x)
     return ([data,pdc_points])
 
-def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=True, pdc=False, cutoff=.2):
+def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_scale=True, show_zeros=True, pdc=False, cutoff=.2, save_as=False):
     #Plots the noise/signal ratios
     #    data is a dataframe as returned by load_dataset
     #    channels is a dictionary where keys are the column name in data
@@ -339,4 +355,5 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True, log_sc
         if show_zeros==True: ax2.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
     
     
-    ax1.legend(loc='upper right')
+    ax1.legend(loc='upper right')    
+    if save_as: fig.savefig(save_as, dpi=300)
