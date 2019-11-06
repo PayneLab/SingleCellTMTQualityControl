@@ -10,7 +10,7 @@ This repository contains all information, data and code necessary to replicate t
 
 * README.md - this introductory file
 * data.md - contains basic information about where data files are located and what they mean
-* data.ipynb -  a tutorial jupyter notebook for how to access and use the data in this project
+* data_descriptor.ipynb -  a tutorial jupyter notebook for how to access and use the data in this project
 * ~/data - a folder that contains data files
 * load_data.py - a python script containing all code required for parsing data files and loading them into data frames.
 * plot_utils.py - a python script containing custom graphing functions
