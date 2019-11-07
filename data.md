@@ -13,7 +13,7 @@ https://pubs.acs.org/doi/10.1021/acs.analchem.9b03349
 
 data\PNNL TMT SC\proteinGroups_PNNL_TMT_SC_Chip1.txt<br />
 
-#### The first column is the IDs. Later reporter intensities are identified. These intensities are saved saved in idividual files below, for readability. Each of these represents a separate TMT run. In our figures we use the run from row A on Chip 1. Note that separating the data into these tables is not necessary but was done for clarity.
+#### The first column is the IDs. Later reporter intensities are identified. These intensities are saved in idividual files below, for readability. Each of these represents a separate TMT run. In our figures we use the run from row A on Chip 1. Note that separating the data into these tables is not necessary but was done for clarity.
 
 data\PNNL TMT SC\proteinGroups_PNNL_TMT_SC_Chip1_A.txt<br />
 data\PNNL TMT SC\proteinGroups_PNNL_TMT_SC_Chip1_B.txt<br />
