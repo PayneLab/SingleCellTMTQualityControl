@@ -3,8 +3,8 @@ import pandas as pd
 
 # Basic data loader functions for a dataframe from a file
 #    using some or all columns.
-# Designed specifically for MaxQuant's proteinGroups, more
-#    information may be found at:
+# Designed specifically for MaxQuant's proteinGroups
+#More information may be found at:
 #    https://github.com/PayneLab/SingleCellTMTQualityControl
 
 from tkinter import filedialog, Tk
