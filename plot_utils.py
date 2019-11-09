@@ -101,8 +101,9 @@ def hist_comp_channels(data, channels,title="Neg Control vs Samples",
         axs[len(axs)-1].spines['top'].set_visible(False)
 
     else:
-        axs.set_title(title)
-        fig, (axs) = plt.subplots()
+        fig, (ax) = plt.subplots()
+        axs.append(ax)
+        ax.set_title(title)
     plt.xscale('log')
 
     #Now we can plot it.
@@ -303,6 +304,9 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True,
     #       'no_break': show zeros without splitting y-axis
     #       False: No zeros shown
     #    pdc controls whether the probability density curve is shown
+    #Returns the percent passing cuttoff
+
+    cutoff_report = {}
 
     if show_zeros==True:
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [1, 4]})
@@ -348,12 +352,6 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True,
             ax1.set_xlabel("Blank/Sample Ratio")
             ax1.set_ylabel("Number of Proteins")
             ax1.hist(ratios, alpha = .7, bins=bins, label=channels[c])
-        if details:
-            print(channels[c]+':')
-            print((len([x for x in ratios if x==0])),'of',len(ratios),'are 0.0')
-            print ('Average: {0:.4f}'.format(mean(ratios)))
-            threshold95 = n_thresholds(ratios, display=False)['with_zeros'][95]
-            print ('95% Threshold: {0:.4f} (1 to {1:.1f})'.format(threshold95, 1/threshold95))
 
         if pdc:
             pdc_points = pdc_plot(ratios)
@@ -361,9 +359,19 @@ def hist_ratios(data, channels, blank,title="Noise Ratios", details=True,
             ax_pdc.plot(pdc_points[0], pdc_points[1], color='orange', label="Probability Density")
             ax_pdc.set_ylabel("-- Percent of Proteins")
         cutoff_percent=(len([x for x in ratios if x < cutoff])/len(ratios))*100
+        cutoff_report[c]=cutoff_percent
         ax1.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
         if show_zeros==True: ax2.axvline(x=cutoff, linestyle='dashed', label='{0} ({1:.2f}%)'.format(cutoff, cutoff_percent), color='black')
 
+        if details:
+            print(channels[c]+':')
+            print((len([x for x in ratios if x==0])),'of',len(ratios),'are 0.0')
+            print ('Average: {0:.4f}'.format(mean(ratios)))
+            threshold95 = n_thresholds(ratios, display=False)['with_zeros'][95]
+            print ('95% Threshold: {0:.4f} (1 to {1:.1f})'.format(threshold95, 1/threshold95))
+            print ("{percent:.2f}% passed a {t} threshold (1 to {T})"
+                .format(percent=cutoff_report[c], t=cutoff, T=1/cutoff))
 
     ax1.legend(loc='upper right')
     if save_as: fig.savefig(save_as, dpi=300)
+    return cutoff_report
