@@ -14,9 +14,9 @@ This repository contains all information, data and code necessary to replicate t
 * ~/data - a folder that contains data files
 * load_data.py - a python script containing all code required for parsing data files and loading them into data frames.
 * plot_utils.py - a python script containing custom graphing functions
+* make_figureA.ipynb - a jupyter notebook that contains all code used in making figure A for the manuscript
 * make_figureB.ipynb - a jupyter notebook that contains all code used in making figure B for the manuscript
 * make_figureC.ipynb - a jupyter notebook that contains all code used in making figure C for the manuscript
-* make_figureD.ipynb - a jupyter notebook that contains all code used in making figure D for the manuscript
 
 ## License
 This package contains LICENSE.md document which describes the license for use. 
