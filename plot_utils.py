@@ -43,7 +43,7 @@ def n_thresholds(alist, percents=[95], display=True):
 
     return r
 
-### Graphed types - as used in figure B
+### Graphed types - as used in figure A
 def hist_comp_channels(data, channels,title="Neg Control vs Samples",
         show_zeros=True, save_as=None):
     #Creates a histogram of selected channels, generally samples and blank.
@@ -144,7 +144,7 @@ def by_sample(data, technical_replicates):
 
     return msSamples
 
-### ROC graphs - used in figure C
+### ROC graphs - used in figure B
 def ROC_plot(msdata, neg_col_name, replicates, rep_name,
         as_fraction=False, square=False):
     #Generates the points for the curve showing for any threshold
@@ -266,7 +266,7 @@ def ROC_all(data, neg_col, cols=None, boost=None, as_fraction=True,
             print ("{0}\t{1:.4f}".format(k,areas[k]))
         return areas
 
-### Neg to sample ratios - used in figureD
+### Neg to sample ratios - used in figure C
 def get_ratios(blank, sample):
     #Takes the blank and sample series
     #   and returns for each protein
